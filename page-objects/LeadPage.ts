@@ -11,33 +11,24 @@ export class LeadPage extends BasePage {
     }
 
     async convertLeadThroughUI(): Promise<void> {
-        const convertButton = this.page
-            .locator('button[name="Lead.Convert"], button:has-text("Convert")')
+        // The Convert action lives in the record page's "Show more actions" menu.
+        await this.chooseActionFromMenu('Convert');
+
+        const convertModal = this.page
+            .locator('.slds-modal, section[role="dialog"]')
+            .filter({ hasText: 'Converted Status' })
             .first();
-        await convertButton.waitFor({ state: 'visible', timeout: 15000 });
-        await convertButton.click();
+        await convertModal.waitFor({ state: 'visible', timeout: 15000 });
+
+        const modalConvertButton = convertModal.locator('button:has-text("Convert")').last();
+        await modalConvertButton.waitFor({ state: 'visible', timeout: 10000 });
+        await modalConvertButton.click();
         await this.waitForLightningSpinnerToDisappear();
 
-        const modalConvertButton = this.page
-            .locator('.slds-modal button:has-text("Convert"), .slds-modal button.slds-button_brand')
-            .last();
-
-        if (await modalConvertButton.isVisible({ timeout: 10000 }).catch(() => false)) {
-            await modalConvertButton.click();
-        } else {
-            const fallbackConvertButton = this.page.locator('button:has-text("Convert"):visible').last();
-            await fallbackConvertButton.waitFor({ state: 'visible', timeout: 10000 });
-            await fallbackConvertButton.click();
-        }
-
-        await this.waitForLightningSpinnerToDisappear();
-
-        const closeButton = this.page
-            .locator('.slds-modal button:has-text("Close"), .slds-modal button[title="Close"]')
-            .first();
-        if (await closeButton.isVisible({ timeout: 10000 }).catch(() => false)) {
-            await closeButton.click();
-            await this.waitForLightningSpinnerToDisappear();
-        }
+        // Wait for the confirmation panel so the converted IDs are available.
+        await this.page
+            .getByText('Your lead has been converted')
+            .first()
+            .waitFor({ state: 'visible', timeout: 30000 });
     }
 }

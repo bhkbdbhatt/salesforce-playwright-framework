@@ -1,3 +1,14 @@
+/**
+ * Reusable SOQL builders for the relationship-validation steps.
+ *
+ * Demo link to the PDF:
+ * - getFullSalesLifecycle -> Scenario 1 step 9, Scenario 2 step 9,
+ *   Scenario 5 step 13 (Account with Contacts + Opportunities).
+ * - getAccountHierarchy   -> Scenario 4 step 9 (Parent -> Child accounts).
+ * - getLeadStatus         -> Scenario 3 steps 8/10 and Scenario 5 step 8
+ *   (IsConverted + ConvertedAccountId/ContactId/OpportunityId).
+ * - getOpportunityByName  -> helper for Opportunity lookups.
+ */
 export class SoqlQueries {
     private static escape(value: string): string {
         return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");

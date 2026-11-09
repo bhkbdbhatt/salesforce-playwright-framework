@@ -16,6 +16,14 @@ export interface SalesforceServiceConfig {
     requestTimeoutMs?: number;
 }
 
+/**
+ * API-backed implementation of SalesforceOperations (default mode).
+ *
+ * Demo link to the PDF: this class covers the "using Playwright API" steps —
+ * create Account/Contact/Opportunity/Lead, update records, delete records,
+ * SOQL queries and the relationship queries used for validation. Lead
+ * conversion is delegated to SoapLeadConverter because REST has no equivalent.
+ */
 export class SalesforceService implements SalesforceOperations {
     private readonly rest: SfApiClient;
     private readonly leadConverter: SoapLeadConverter;

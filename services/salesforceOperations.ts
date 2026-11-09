@@ -4,6 +4,12 @@ import type { AccountData, ContactData, LeadData, OpportunityData } from '../uti
 /**
  * Contract shared by the API-backed and UI-backed Salesforce implementations.
  * Tests depend only on this interface, so they run unchanged in either mode.
+ *
+ * Demo link to the PDF: the scenarios say steps like "create using Playwright
+ * API" and "convert through Salesforce UI". Both are the same interface call
+ * here; the active implementation decides whether that call uses REST/SOAP or
+ * the Lightning UI. Read operations (query/get*) are the SOQL/REST validation
+ * layer used by the "Execute SOQL" and "validate through backend" steps.
  */
 export interface SalesforceOperations {
     createAccount(data: AccountData | Record<string, unknown>): Promise<string>;

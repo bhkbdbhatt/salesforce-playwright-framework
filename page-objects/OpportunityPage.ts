@@ -1,6 +1,11 @@
 import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
+/**
+ * Opportunity-specific Lightning actions.
+ * Demo link to the PDF: supports Scenario 1 step 7 (update Stage, Amount and
+ * Close Date) and Scenario 5 step 11 (update a selected Opportunity).
+ */
 export class OpportunityPage extends BasePage {
     constructor(page: Page) {
         super(page);

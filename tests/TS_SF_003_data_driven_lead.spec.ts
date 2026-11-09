@@ -1,3 +1,37 @@
+/**
+ * ============================================================================
+ * PDF SCENARIO 3 — "Data-Driven Lead Creation and Conversion"
+ * Source: "Week 1 Sceanrios 1.pdf" (Scenario 3)
+ * ----------------------------------------------------------------------------
+ * Goal: automate multiple Lead journeys from dynamic data and convert only the
+ * Leads whose runtime condition says they are eligible.
+ *
+ * Execution engine: writes go through `SalesforceOperations` (API by default,
+ * Lightning UI when EXECUTION_MODE='ui'). SOQL / REST reads always use the API.
+ *
+ * PDF expected-automation step -> code that implements it (demo map):
+ *   1. Login ............................. tests/auth.setup.ts
+ *   2. >= 5 Lead datasets ................ Array.from({length:5}) + generateLeadData
+ *   3. Maintain datasets in a Collection . `datasets` array
+ *   4. Create Leads dynamically .......... sfApi.createLead (API or UI)
+ *   5. Capture Lead IDs in a Map ......... `leadRelationships` Map
+ *   6. Condition decides conversion ...... shouldConvert (see CONDITION below)
+ *   7. Convert eligible Leads ............ sfApi.convertLead -> SOAP/UI
+ *   8. Capture Account/Contact/Opp IDs ... relationship.accountId/contactId/oppId
+ *   9. Lead -> A -> C -> O relationships .. `leadRelationships` Map entries
+ *  10. SOQL validates converted states ... getLeadStatus + Account sub-queries
+ *  11. Validate generated records ........ Account name + linked Contact/Opp
+ *  12. Compare UI results with backend ... SOQL vs REST GET cross-check
+ *  13. Continue after one dataset fails .. per-dataset try/catch + datasetErrors
+ *  14. Failure logs/screenshots/IDs ...... captureFailure (utils/diagnostics.ts)
+ *  15. Clean up generated records ........ reconcileTrackedLeads + cleanup
+ *  16. 5 consecutive stable executions ... npm run test:repeat (--repeat-each=5)
+ *
+ * CONVERSION CONDITION (PDF step 6): a Lead is converted when its Rating is
+ * 'Hot' OR its Country is 'India'. Everything else stays unconverted so the
+ * test can validate both states.
+ * ============================================================================
+ */
 import { test, expect } from '@playwright/test';
 import { createSalesforceService } from '../services/salesforceServiceFactory';
 import type { SalesforceOperations } from '../services/salesforceOperations';
@@ -21,13 +55,15 @@ test('TS_SF_003: Data-Driven Lead Creation and Conversion', async ({ page }, tes
     const cleanup = new CleanupManager(sfApi);
     const executionId = `LEAD_${Date.now()}`;
 
-    // 2 & 3. Build at least 5 Lead datasets with different field combinations.
+    // PDF steps 2 & 3 — Build at least 5 Lead datasets with different Lead
+    // Source, Industry, Rating and Country combinations, kept in a Collection.
     const datasets: LeadDataset[] = Array.from({ length: 5 }, (_, index) => {
         const data = TestDataGenerator.generateLeadData(index);
         return {
             ...data,
             LastName: `Lead_${executionId}_${index + 1}`,
             Company: `Company_${executionId}_${index + 1}`,
+            // PDF step 6 — Predefined runtime condition that decides conversion.
             shouldConvert: data.Rating === 'Hot' || data.Country === 'India'
         };
     });
@@ -42,10 +78,12 @@ test('TS_SF_003: Data-Driven Lead Creation and Conversion', async ({ page }, tes
     let actual: unknown;
 
     try {
-        // Salesforce requires an org-configured converted Lead status.
+        // Salesforce requires an org-configured converted Lead status, so read it
+        // from the org instead of hard-coding 'Closed - Converted'.
         const convertedStatus = await sfApi.getConvertedLeadStatus();
 
-        // 4 & 5. Create Leads dynamically and capture each Lead ID in a Map.
+        // PDF steps 4 & 5 — Create each Lead dynamically and capture its ID in the
+        // `leadRelationships` Map, keyed by Lead ID.
         for (const [index, dataset] of datasets.entries()) {
             let leadId: string | undefined;
             try {
@@ -65,7 +103,9 @@ test('TS_SF_003: Data-Driven Lead Creation and Conversion', async ({ page }, tes
                 const relationship: LeadRelationship = { dataset };
                 leadRelationships.set(leadId, relationship);
 
-                // 6 & 7. Convert eligible Leads through the Salesforce SOAP API.
+                // PDF steps 6 & 7 — Only Leads meeting the runtime condition are
+                // converted. In 'api' mode this is the SOAP convertLead call; in
+                // 'ui' mode it is the Lightning Convert flow.
                 if (dataset.shouldConvert) {
                     failedStep = `Convert Lead ${index + 1} via API`;
                     const result = await sfApi.convertLead(leadId, {
@@ -74,7 +114,8 @@ test('TS_SF_003: Data-Driven Lead Creation and Conversion', async ({ page }, tes
                     });
                     expect(result.success).toBeTruthy();
 
-                    // 8 & 9. Capture the resulting Account, Contact and Opportunity IDs.
+                    // PDF steps 8 & 9 — Capture the resulting Account, Contact and
+                    // Opportunity IDs and keep the Lead -> A -> C -> O relationship.
                     failedStep = `Capture converted records for Lead ${index + 1}`;
                     const convertedLead = await sfApi.getLeadStatus(leadId);
                     expect(
@@ -87,8 +128,8 @@ test('TS_SF_003: Data-Driven Lead Creation and Conversion', async ({ page }, tes
                     relationship.opportunityId =
                         result.opportunityId ?? convertedLead.ConvertedOpportunityId;
 
-                    // Track in dependency order so reverse cleanup deletes Opportunity,
-                    // then Contact, then the Account.
+                    // PDF step 15 — Track in dependency order so reverse cleanup
+                    // deletes Opportunity, then Contact, then the Account.
                     cleanup.track('Account', relationship.accountId);
                     cleanup.track('Contact', relationship.contactId);
                     cleanup.track('Opportunity', relationship.opportunityId);
@@ -96,7 +137,8 @@ test('TS_SF_003: Data-Driven Lead Creation and Conversion', async ({ page }, tes
                     cleanup.track('Lead', leadId);
                 }
             } catch (error) {
-                // 13. Report the failure and continue with the remaining datasets.
+                // PDF step 13 — Record this dataset's failure but keep processing
+                // the remaining datasets so one bad row does not abort the run.
                 datasetErrors.push(
                     `Dataset ${index + 1} (${dataset.Company}): ${
                         error instanceof Error ? error.message : String(error)
@@ -109,7 +151,8 @@ test('TS_SF_003: Data-Driven Lead Creation and Conversion', async ({ page }, tes
             }
         }
 
-        // 10, 11 & 12. Validate converted/unconverted states and generated records via SOQL.
+        // PDF steps 10, 11 & 12 — Validate converted and unconverted Lead states
+        // plus the generated Account/Contact/Opportunity records through SOQL.
         failedStep = 'SOQL validation of all Lead datasets';
         for (const [leadId, relationship] of leadRelationships.entries()) {
             const { dataset } = relationship;
@@ -150,7 +193,8 @@ test('TS_SF_003: Data-Driven Lead Creation and Conversion', async ({ page }, tes
             }
         }
 
-        // 12. Compare the converted Account's backend values with a direct REST API read.
+        // PDF step 12 — Compare the converted Account's backend values with a
+        // direct REST API read (independent confirmation of the SOQL result).
         const convertedEntry = Array.from(leadRelationships.entries()).find(
             ([, relationship]) => relationship.dataset.shouldConvert && relationship.accountId
         );
@@ -171,6 +215,8 @@ test('TS_SF_003: Data-Driven Lead Creation and Conversion', async ({ page }, tes
             throw new Error(`One or more Lead datasets failed:\n${allErrors.join('\n')}`);
         }
     } catch (error) {
+        // PDF step 14 — Capture logs, screenshots, record IDs and expected/actual
+        // values for the failure (utils/diagnostics.ts).
         await captureFailure(
             page,
             testInfo,
@@ -187,7 +233,8 @@ test('TS_SF_003: Data-Driven Lead Creation and Conversion', async ({ page }, tes
         );
         throw error;
     } finally {
-        // 15. Clean up all dynamically generated records.
+        // PDF step 15 — Clean up all dynamically generated records. Converted
+        // Leads are expanded into their Account/Contact/Opportunity first.
         await reconcileTrackedLeads(sfApi, cleanup);
         await cleanup.cleanup();
     }

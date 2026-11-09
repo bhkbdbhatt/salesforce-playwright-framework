@@ -1,6 +1,13 @@
 import { Page } from '@playwright/test';
 
 /**
+ * Shared Lightning UI mechanics used when EXECUTION_MODE='ui'.
+ *
+ * Demo link to the PDF: createRecord/editRecord/deleteRecord below implement the
+ * "through Salesforce UI" variants of the create, update and cleanup steps used
+ * across all five scenarios. In 'api' mode these same steps are served by the
+ * REST client instead, so the scenarios themselves never change.
+ *
  * Lightning renderers do not always expose the API field name on the control.
  * Map the API field names used by the tests to the labels rendered in the UI.
  */

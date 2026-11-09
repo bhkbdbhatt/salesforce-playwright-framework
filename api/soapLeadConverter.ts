@@ -24,6 +24,14 @@ interface SoapLeadConverterConfig {
     requestTimeoutMs?: number;
 }
 
+/**
+ * SOAP `convertLead` implementation.
+ *
+ * Demo link to the PDF: this backs Scenario 3 step 7 and Scenario 5 step 7
+ * ("Convert eligible Leads"). Salesforce has no standard REST endpoint for
+ * Lead conversion, so the SOAP partner API is used in API mode. The UI mode
+ * equivalent is LeadPage.convertLeadThroughUI().
+ */
 export class SoapLeadConverter {
     private readonly request: APIRequestContext;
     private readonly baseURL: string;

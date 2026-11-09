@@ -1,6 +1,11 @@
 import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
+/**
+ * Account-specific Lightning actions.
+ * Demo link to the PDF: supports Scenario 1 step 6 (New Opportunity from an
+ * Account) and Scenario 4 steps 7-8 (open the Account, edit a child's Phone).
+ */
 export class AccountPage extends BasePage {
     constructor(page: Page) {
         super(page);

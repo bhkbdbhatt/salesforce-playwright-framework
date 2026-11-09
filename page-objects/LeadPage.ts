@@ -1,6 +1,11 @@
 import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
+/**
+ * Lead-specific Lightning actions.
+ * Demo link to the PDF: convertLeadThroughUI() supports Scenario 3 step 7 and
+ * Scenario 5 step 7 in 'ui' mode (the API/SOAP equivalent is SoapLeadConverter).
+ */
 export class LeadPage extends BasePage {
     constructor(page: Page) {
         super(page);

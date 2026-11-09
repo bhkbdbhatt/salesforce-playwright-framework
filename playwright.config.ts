@@ -11,6 +11,15 @@ if (process.env.TESTDINO_TOKEN) {
     reporters.push(['@testdino/playwright', { token: process.env.TESTDINO_TOKEN }]);
 }
 
+/**
+ * Demo link to the PDF:
+ * - The `setup` project runs tests/auth.setup.ts once (PDF step 1: Login).
+ * - The `salesforce-e2e` project depends on `setup` and reuses .auth/user.json.
+ * - `npm run test:repeat` passes --repeat-each=5, which satisfies the
+ *   "5 consecutive executions" requirement in every scenario.
+ * - `workers: 1` / `fullyParallel: false` avoid Salesforce API limits and
+ *   record collisions across scenarios sharing one org.
+ */
 export default defineConfig({
     testDir: './tests',
     fullyParallel: false,

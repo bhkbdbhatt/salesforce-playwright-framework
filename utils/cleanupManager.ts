@@ -10,6 +10,15 @@ export interface TrackedRecord {
     id: string;
 }
 
+/**
+ * Tracks every record created during a run and deletes them in reverse order.
+ *
+ * Demo link to the PDF: implements the cleanup steps —
+ * Scenario 1 step 12, Scenario 2 step 13, Scenario 3 step 15,
+ * Scenario 4 step 14 and Scenario 5 step 17. Reverse order gives the correct
+ * dependency order: Opportunity -> Contact -> Account (children before parents).
+ * Cleanup always runs from a `finally` block, so it executes on failure too.
+ */
 export class CleanupManager {
     private records: TrackedRecord[] = [];
 

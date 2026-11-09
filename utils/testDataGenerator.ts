@@ -34,6 +34,14 @@ export interface LeadData {
     Country: string;
 }
 
+/**
+ * Generates unique, execution-scoped test data.
+ *
+ * Demo link to the PDF: backs the "dynamically generate" steps —
+ * Scenario 1 step 2, Scenario 2 steps 2/4/5, Scenario 3 step 2,
+ * Scenario 4 steps 2-5 and Scenario 5 step 3. The static counter plus a
+ * timestamp suffix guarantees no collisions between the 5 consecutive runs.
+ */
 export class TestDataGenerator {
     private static counter = 0;
 

@@ -1,3 +1,13 @@
+/**
+ * PDF step 1 of ALL FIVE scenarios — "Login to Salesforce".
+ *
+ * This setup project runs once before the e2e suite. It logs in through the
+ * Playwright browser, completes the two-step username/password flow, waits for
+ * MFA if required, and saves the authenticated session to .auth/user.json.
+ * The e2e project then reuses that storageState, so every scenario starts
+ * already logged in. A stored session is validated against /services/data/
+ * (not the Lightning home page) so an expired session triggers a fresh login.
+ */
 import { test as setup, request, APIRequestContext } from '@playwright/test';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';

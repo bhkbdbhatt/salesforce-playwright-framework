@@ -9,6 +9,14 @@ interface StoredState {
     cookies?: StoredCookie[];
 }
 
+/**
+ * Reads the Salesforce session ID (`sid` cookie) from the storageState file
+ * written by tests/auth.setup.ts.
+ *
+ * Demo link to the PDF: this is how the "Login to Salesforce" step (step 1 of
+ * every scenario) is reused by the API layer, so REST/SOQL calls made later
+ * inherit the same authenticated session.
+ */
 export function readSessionId(storageStatePath: string): string | undefined {
     if (!fs.existsSync(storageStatePath)) {
         return undefined;

@@ -12,6 +12,12 @@ import type { AccountData, ContactData, LeadData, OpportunityData } from '../uti
  * Writes (create/update/delete/convert) run through the Lightning UI with
  * Playwright. Reads (SOQL/REST GET) delegate to the API because they are the
  * backend verification layer and have no UI equivalent.
+ *
+ * Demo link to the PDF: enable this by setting EXECUTION_MODE='ui'. Then the
+ * "through Salesforce UI" steps (Scenario 1 steps 6-7, Scenario 2 step 8,
+ * Scenario 3 step 7, Scenario 4 steps 7-8, Scenario 5 steps 7/11) genuinely
+ * drive Lightning, while every "Execute SOQL" / backend validation step still
+ * uses the API.
  */
 export class UiSalesforceService extends BasePage implements SalesforceOperations {
     private readonly api: SalesforceService;

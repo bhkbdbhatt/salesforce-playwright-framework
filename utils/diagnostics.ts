@@ -2,6 +2,15 @@ import { Page, TestInfo } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
+/**
+ * Failure diagnostics used by every scenario.
+ *
+ * Demo link to the PDF: implements Scenario 1 step 13, Scenario 2 step 14,
+ * Scenario 3 step 14, Scenario 4 step 15 and Scenario 5 step 16. It records the
+ * execution ID, failed step, record ID, input dataset, expected/actual values,
+ * page URL, error message/stack and a full-page screenshot, then attaches them
+ * to the Playwright report and writes test-results/diagnostics/*.json|png.
+ */
 export interface FailureContext {
     executionId: string;
     testName: string;

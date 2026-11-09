@@ -1,3 +1,38 @@
+/**
+ * ============================================================================
+ * PDF SCENARIO 4 — "Multi-Level Account Hierarchy and Related Records"
+ * Source: "Week 1 Sceanrios 1.pdf" (Scenario 4)
+ * ----------------------------------------------------------------------------
+ * Goal: automate a Parent Account with Child Accounts, each owning Contacts
+ * and Opportunities, and validate the whole tree.
+ *
+ * Hierarchy built by this test:
+ *   Parent Account
+ *     +-- Child Account 1 -> 2 Contacts + 2 Opportunities
+ *     +-- Child Account 2 -> 2 Contacts + 2 Opportunities
+ *
+ * Execution engine: writes go through `SalesforceOperations` (API by default,
+ * Lightning UI when EXECUTION_MODE='ui'). SOQL / REST reads always use the API.
+ *
+ * PDF expected-automation step -> code that implements it (demo map):
+ *   1. Login ............................. tests/auth.setup.ts
+ *   2. Create Parent Account via API ..... sfApi.createAccount
+ *   3. Create Child Accounts ............. loop i=1..2, ParentId set
+ *   4. Contacts per Child Account ........ inner loop, generateContactData
+ *   5. Opportunities per Child Account ... inner loop, generateOpportunityData
+ *   6. Nested hierarchy collection ....... `hierarchy` (parent -> children[])
+ *   7. Navigate hierarchy via UI ......... sfApi.updateAccount (UI in 'ui' mode)
+ *   8. Modify selected child record ...... updateAccount(child[0], Phone)
+ *   9. Relationship-based SOQL ........... sfApi.getAccountHierarchy
+ *  10. Validate Parent -> Child .......... expect(child IDs) equality
+ *  11. Validate Child -> Contact/Opp ..... per-child SOQL sub-queries
+ *  12. Compare against nested collection . expected from `hierarchy`
+ *  13. Detect incorrect/missing links .... Set-size + equality checks
+ *  14. Cleanup in dependency order ....... utils/cleanupManager.ts (finally)
+ *  15. Failure diagnostics ............... utils/diagnostics.ts captureFailure
+ *  16. 5 consecutive stable executions ... npm run test:repeat (--repeat-each=5)
+ * ============================================================================
+ */
 import { test, expect } from '@playwright/test';
 import { createSalesforceService } from '../services/salesforceServiceFactory';
 import { TestDataGenerator } from '../utils/testDataGenerator';
@@ -16,7 +51,9 @@ test('TS_SF_004: Multi-Level Account Hierarchy and Related Records', async ({ pa
     const cleanup = new CleanupManager(sfApi);
     const executionId = `HIER_${Date.now()}`;
 
-    // 6. Maintain the complete hierarchy using nested collections.
+    // PDF step 6 — Maintain the complete hierarchy using a nested collection:
+    // parent details plus a `childAccounts` array, each with its own contact
+    // and opportunity ID arrays.
     const hierarchy: { parentAccountId: string; parentAccountName: string; childAccounts: ChildNode[] } = {
         parentAccountId: '',
         parentAccountName: '',
@@ -29,7 +66,8 @@ test('TS_SF_004: Multi-Level Account Hierarchy and Related Records', async ({ pa
     let actual: unknown;
 
     try {
-        // 2. Create the Parent Account through the API.
+        // PDF step 2 — Dynamically create the Parent Account through Playwright
+        // (REST in 'api' mode, Lightning UI in 'ui' mode).
         failedStep = 'Create Parent Account';
         const parentPayload = TestDataGenerator.generateAccountData();
         parentPayload.Name = `Parent_Acc_${executionId}`;
@@ -37,7 +75,8 @@ test('TS_SF_004: Multi-Level Account Hierarchy and Related Records', async ({ pa
         hierarchy.parentAccountName = parentPayload.Name;
         cleanup.track('Account', hierarchy.parentAccountId);
 
-        // 3, 4 & 5. Create Child Accounts with Contacts and Opportunities.
+        // PDF steps 3, 4 & 5 — Create two Child Accounts linked to the Parent,
+        // then add 2 Contacts and 2 Opportunities to each Child Account.
         for (let i = 1; i <= 2; i++) {
             failedStep = `Create Child Account ${i}`;
             const childPayload = TestDataGenerator.generateAccountData();
@@ -75,15 +114,17 @@ test('TS_SF_004: Multi-Level Account Hierarchy and Related Records', async ({ pa
             hierarchy.childAccounts.push(child);
         }
 
-        // 7 & 8. Read the hierarchy and modify a selected child record through the API.
+        // PDF steps 7 & 8 — Navigate to a selected child record and modify it
+        // (Lightning UI in 'ui' mode, REST in 'api' mode).
         failedStep = 'Modify selected child Account through API';
         await sfApi.updateAccount(hierarchy.childAccounts[0].childAccountId, { Phone: updatedPhone });
 
-        // 9. Execute relationship-based SOQL.
+        // PDF step 9 — Execute relationship-based SOQL for the parent and its
+        // child Accounts (query builder: SoqlQueries.getAccountHierarchy).
         failedStep = 'SOQL hierarchy validation';
         const parent = await sfApi.getAccountHierarchy(hierarchy.parentAccountId);
 
-        // 10. Validate Parent -> Child Account relationships.
+        // PDF step 10 — Validate Parent -> Child Account relationships.
         failedStep = 'Validate Parent -> Child relationships';
         expect(parent.Id).toBe(hierarchy.parentAccountId);
         expected = hierarchy.childAccounts.map(child => child.childAccountId).sort();
@@ -91,8 +132,9 @@ test('TS_SF_004: Multi-Level Account Hierarchy and Related Records', async ({ pa
         expect(actual).toEqual(expected);
         expect(new Set(actual as string[]).size).toBe((actual as string[]).length);
 
-        // 11, 12 & 13. Validate Child -> Contact/Opportunity relationships against
-        // the nested runtime collection.
+        // PDF steps 11, 12 & 13 — Validate Child -> Contact/Opportunity
+        // relationships against the nested runtime collection and detect
+        // incorrect, missing or unexpectedly associated records (Set-size check).
         failedStep = 'Validate Child -> Contact/Opportunity relationships';
         for (const child of hierarchy.childAccounts) {
             const childRecord = await sfApi.queryOne<any>(
@@ -114,7 +156,8 @@ test('TS_SF_004: Multi-Level Account Hierarchy and Related Records', async ({ pa
             expect(actual).toBe(expected);
         }
 
-        // Confirm the child Account API modification persisted in the backend.
+        // PDF step 12 — Confirm the child Account modification persisted by
+        // reading it back through a second path (REST GET).
         failedStep = 'Validate child Account API update through REST API';
         const updatedChild = await sfApi.getRecord<any>(
             'Account',
@@ -130,6 +173,8 @@ test('TS_SF_004: Multi-Level Account Hierarchy and Related Records', async ({ pa
         ]);
         expect(parentRecord.Name).toBe(hierarchy.parentAccountName);
     } catch (error) {
+        // PDF step 15 — Provide diagnostic information (failed step, record ID,
+        // dataset, expected/actual values, screenshot) for any failure.
         await captureFailure(
             page,
             testInfo,
@@ -147,7 +192,8 @@ test('TS_SF_004: Multi-Level Account Hierarchy and Related Records', async ({ pa
         );
         throw error;
     } finally {
-        // 14. Clean up in reverse dependency order (Opportunities/Contacts before Accounts).
+        // PDF step 14 — Clean up in the correct dependency order: Opportunities
+        // and Contacts before Accounts (children before the Parent).
         await cleanup.cleanup();
     }
 });

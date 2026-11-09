@@ -2,6 +2,14 @@ import { APIRequestContext, APIResponse } from '@playwright/test';
 import * as path from 'path';
 import { authHeadersFromState } from './sessionState';
 
+/**
+ * Low-level Salesforce REST transport used by the API mode.
+ *
+ * Demo link to the PDF: backs the "create/update/delete using Playwright API"
+ * and "Execute SOQL through Playwright" steps. Uses the session ID saved by
+ * auth.setup.ts as a Bearer token. `query()` runs SOQL; `getRecord()` is the
+ * independent REST GET used by the "validate through backend" checks.
+ */
 export class SfApiClient {
     private readonly request: APIRequestContext;
     private readonly apiVersion: string;

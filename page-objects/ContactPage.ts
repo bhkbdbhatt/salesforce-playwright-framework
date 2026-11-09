@@ -1,6 +1,11 @@
 import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
+/**
+ * Contact-specific Lightning actions.
+ * Demo link to the PDF: supports Scenario 2 step 8 (update a selected Contact's
+ * Title through the UI).
+ */
 export class ContactPage extends BasePage {
     constructor(page: Page) {
         super(page);

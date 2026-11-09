@@ -8,6 +8,11 @@ export type ExecutionMode = 'api' | 'ui';
  *
  * Read-only verification (SOQL queries and REST GET) always runs through the API,
  * because SOQL has no UI equivalent.
+ *
+ * Demo link to the PDF: this single flag is how each scenario satisfies BOTH
+ * the "using Playwright API" and "through Salesforce UI" wording. 'api' runs
+ * steps like Scenario 1 steps 3/5/6/7 via REST; 'ui' runs them through
+ * Lightning. SOQL/backend validation steps are unaffected.
  */
 export const EXECUTION_MODE: ExecutionMode = 'api';
 

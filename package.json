@@ -1,0 +1,31 @@
+{
+    "name": "salesforce-playwright-automation",
+    "version": "1.0.0",
+    "description": "Salesforce E2E Test Automation Framework using Playwright, TypeScript, and Salesforce REST API / SOQL.",
+    "main": "index.js",
+    "scripts": {
+        "auth:setup": "playwright test tests/auth.setup.ts --headed",
+        "test": "playwright test",
+        "test:headed": "playwright test --headed",
+        "test:repeat": "playwright test --project=salesforce-e2e --repeat-each=5",
+        "typecheck": "tsc --noEmit"
+    },
+    "keywords": [
+        "playwright",
+        "salesforce",
+        "testing",
+        "typescript",
+        "automation",
+        "soql",
+        "e2e"
+    ],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@playwright/test": "^1.40.0",
+        "@testdino/playwright": "^2.11.1",
+        "@types/node": "^20.10.0",
+        "dotenv": "^16.3.1",
+        "typescript": "^5.3.0"
+    }
+}

@@ -62,6 +62,14 @@ export class SalesforceService implements SalesforceOperations {
         return this.rest.createRecord('Lead', data);
     }
 
+    createRecord(objectApiName: string, data: Record<string, unknown>): Promise<string> {
+        return this.rest.createRecord(objectApiName, data);
+    }
+
+    updateRecord(objectApiName: string, recordId: string, data: Record<string, unknown>): Promise<void> {
+        return this.rest.updateRecord(objectApiName, recordId, data);
+    }
+
     updateAccount(recordId: string, data: Record<string, unknown>): Promise<void> {
         return this.rest.updateRecord('Account', recordId, data);
     }

@@ -32,6 +32,7 @@ export interface LeadData {
     Industry: string;
     Rating: string;
     Country: string;
+    Email?: string;
 }
 
 /**

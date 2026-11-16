@@ -17,6 +17,15 @@ export interface SalesforceOperations {
     createOpportunity(data: OpportunityData | Record<string, unknown>): Promise<string>;
     createLead(data: LeadData | Record<string, unknown>): Promise<string>;
 
+    /**
+     * Week 2 scenarios also create records that do not have a dedicated helper:
+     * Product2, Pricebook2, PricebookEntry, OpportunityLineItem,
+     * OpportunityContactRole and the Composite Graph payloads. These generic
+     * methods keep the create/update strategy consistent with the active mode.
+     */
+    createRecord(objectApiName: string, data: Record<string, unknown>): Promise<string>;
+    updateRecord(objectApiName: string, recordId: string, data: Record<string, unknown>): Promise<void>;
+
     updateAccount(recordId: string, data: Record<string, unknown>): Promise<void>;
     updateContact(recordId: string, data: Record<string, unknown>): Promise<void>;
     updateOpportunity(recordId: string, data: Record<string, unknown>): Promise<void>;

@@ -30,19 +30,27 @@ export class UiSalesforceService extends BasePage implements SalesforceOperation
     }
 
     createAccount(data: AccountData | Record<string, unknown>): Promise<string> {
-        return this.createRecord('Account', data);
+        return super.createRecord('Account', data);
     }
 
     createContact(data: ContactData | Record<string, unknown>): Promise<string> {
-        return this.createRecord('Contact', data);
+        return super.createRecord('Contact', data);
     }
 
     createOpportunity(data: OpportunityData | Record<string, unknown>): Promise<string> {
-        return this.createRecord('Opportunity', data);
+        return super.createRecord('Opportunity', data);
     }
 
     createLead(data: LeadData | Record<string, unknown>): Promise<string> {
-        return this.createRecord('Lead', data);
+        return super.createRecord('Lead', data);
+    }
+
+    createRecord(objectApiName: string, data: Record<string, unknown>): Promise<string> {
+        return super.createRecord(objectApiName, data);
+    }
+
+    updateRecord(objectApiName: string, recordId: string, data: Record<string, unknown>): Promise<void> {
+        return this.editRecord(objectApiName, recordId, data);
     }
 
     updateAccount(recordId: string, data: Record<string, unknown>): Promise<void> {

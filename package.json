@@ -8,6 +8,8 @@
         "test": "playwright test",
         "test:headed": "playwright test --headed",
         "test:repeat": "playwright test --project=salesforce-e2e --repeat-each=5",
+        "test:week2": "playwright test tests/week2 --project=salesforce-e2e",
+        "test:week2:repeat": "playwright test tests/week2 --project=salesforce-e2e --repeat-each=5",
         "typecheck": "tsc --noEmit"
     },
     "keywords": [

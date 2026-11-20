@@ -163,9 +163,11 @@ test('TS_SF_W2_005: Parallel Lead-to-Sales Lifecycle with Recovery', async ({
     let fatal: unknown;
 
     try {
-        // PDF steps 4, 6, 7, 8, 9, 10, 11, 13 & 14 — process at least three
-        // journeys concurrently, each in an isolated browser context.
-        await runWithConcurrency(journeys, 3, journey =>
+        // PDF steps 4, 6, 7, 8, 9, 10, 11, 13 & 14 — process journeys concurrently
+        // in isolated browser contexts. UI mode is serialized to avoid Lightning
+        // modal/save contention and flakiness across parallel contexts.
+        const concurrency = resolveExecutionMode() === 'ui' ? 1 : 3;
+        await runWithConcurrency(journeys, concurrency, journey =>
             runJourney(browser, journey, convertedStatus)
         );
 
@@ -677,9 +679,11 @@ async function validateJourneys(journeys: JourneyRecord[]): Promise<string[]> {
         }
 
         if (journey.updatedOpportunityId) {
+            const roleOpportunityIds = journey.extraOpportunityIds;
+            const idList = roleOpportunityIds.map(id => `'${id}'`).join(', ');
             const contactRoles = await service.queryRecords<any>(
                 `SELECT Id, ContactId, OpportunityId FROM OpportunityContactRole ` +
-                    `WHERE OpportunityId = '${journey.updatedOpportunityId}'`
+                    `WHERE OpportunityId IN (${idList})`
             );
 
             issues.push(

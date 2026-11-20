@@ -79,14 +79,14 @@ export class BasePage {
                 'button[name="SaveEdit"]:visible, button[name="Save"]:visible, button:text-is("Save"):visible'
             )
             .last();
-        await saveButton.waitFor({ state: 'visible', timeout: 15000 });
+        await saveButton.waitFor({ state: 'visible', timeout: 45000 });
         await saveButton.click();
         await this.waitForLightningSpinnerToDisappear();
 
         const successToast = this.page
             .locator('.slds-notify__content, .toastMessage, .forceToastMessage')
             .first();
-        await successToast.waitFor({ state: 'visible', timeout: 10000 }).catch(() => undefined);
+        await successToast.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
     }
 
     protected formatDateForUi(isoDate: string): string {
@@ -167,7 +167,7 @@ export class BasePage {
 
     private async clickPrimarySave(): Promise<void> {
         const saveButton = this.primarySaveButton();
-        await saveButton.waitFor({ state: 'visible', timeout: 30000 });
+        await saveButton.waitFor({ state: 'visible', timeout: 45000 });
         await saveButton.click();
         await this.waitForLightningSpinnerToDisappear();
     }

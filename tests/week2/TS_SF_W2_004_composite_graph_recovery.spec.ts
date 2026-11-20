@@ -55,7 +55,7 @@ import {
 } from './support/week2Helpers';
 
 const EXECUTION_ID_PATTERN = /^W2S4_\d{13}_[A-Z0-9]{4}$/;
-const GRAPH_ID_PATTERN = /^W2S4_Customer_[123]_W2S4_\d{13}_[A-Z0-9]{4}(?:_Retry)?$/;
+const GRAPH_ID_PATTERN = /^W2S4_(?:Customer_[123]|C[123]R)_W2S4_\d{13}_[A-Z0-9]{4}$/;
 
 interface GraphContact {
     ref: string;
@@ -160,7 +160,7 @@ test('TS_SF_W2_004: Related Record Creation, API Failure, and Recovery', async (
                     FirstName: 'W2S4',
                     LastName: lastName,
                     Email: `w2s4.customer.${i}.contact.${contactIndex}.${Date.now()}@example.test`,
-                    AccountId: `@{${accountRef}.Id}`
+                    AccountId: `@{${accountRef}.id}`
                 }
             };
         });
@@ -176,7 +176,7 @@ test('TS_SF_W2_004: Related Record Creation, API Failure, and Recovery', async (
                     StageName: 'Prospecting',
                     Amount: 10000 * i + opportunityIndex * 5000,
                     CloseDate: futureDateIso(30 + i * 10 + opportunityIndex * 5),
-                    AccountId: `@{${accountRef}.Id}`
+                    AccountId: `@{${accountRef}.id}`
                 }
             };
         });
@@ -334,8 +334,9 @@ test('TS_SF_W2_004: Related Record Creation, API Failure, and Recovery', async (
         // its graph, then verify recovery and the absence of duplicates.
         failedStep = 'Correct and resubmit Customer 2 graph';
         const failedCustomer = datasets.find(dataset => !dataset.shouldSucceed)!;
-        const retryGraphId = `${failedCustomer.graphId}_Retry`;
+        const retryGraphId = `W2S4_C${failedCustomer.index}R_${executionId}`;
         expectMatches('Customer 2 retry graph ID', retryGraphId, GRAPH_ID_PATTERN);
+        expect(retryGraphId.length, 'Customer 2 retry graph ID must be under 40 characters').toBeLessThan(40);
 
         const retryContacts = failedCustomer.contacts.map((contact, index) => ({
             ...contact,
@@ -360,16 +361,20 @@ test('TS_SF_W2_004: Related Record Creation, API Failure, and Recovery', async (
             retryOpportunities.map(opportunity => opportunity.ref),
             retryContacts.map(contact => ({
                 ...contact.payload,
-                AccountId: `@{${retryAccountRef}.Id}`
+                AccountId: `@{${retryAccountRef}.id}`
             })),
             retryOpportunities.map(opportunity => ({
                 ...opportunity.payload,
-                AccountId: `@{${retryAccountRef}.Id}`
+                AccountId: `@{${retryAccountRef}.id}`
             }))
         );
 
         const [retryResult] = await graphClient.submit([retryGraph]);
-        expect(retryResult?.isSuccessful, 'Corrected Customer 2 graph should succeed').toBeTruthy();
+        const retryErrors = retryResult ? summarizeGraphErrors(retryResult) : ['no graph result'];
+        expect(
+            retryResult?.isSuccessful,
+            `Corrected Customer 2 graph should succeed: ${retryErrors.join('; ')}`
+        ).toBeTruthy();
 
         const retryIds = extractCreatedIds(retryResult);
         const retryCustomer: CustomerResult = {

@@ -188,33 +188,22 @@ export async function readOpportunityAmountFromUi(
     opportunityId: string
 ): Promise<string> {
     await page.goto(`/lightning/r/Opportunity/${opportunityId}/view`);
-    await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveURL(new RegExp(opportunityId));
 
-    const amountField = page
-        .locator(
-            'records-record-layout-item[field-label="Amount"], records-record-layout-item[data-field-label="Amount"]'
-        )
-        .first();
+    const amountValue = page
+        .getByText('Amount', { exact: true })
+        .first()
+        .locator('xpath=following-sibling::p[1]');
 
-    if (await amountField.count()) {
-        const text = await amountField.innerText();
-        const match = text.match(/[$€£¥₹]?\s*-?\d[\d.,\s]*\d?/);
-        if (match) {
-            return match[0].trim();
-        }
+    await expect(amountValue).toBeVisible({ timeout: 30_000 });
+    const text = (await amountValue.innerText()).trim();
+    const match = text.match(/^[$€£¥₹]?\s*-?\d[\d.,\s]*\d?$/);
+
+    if (!match) {
+        throw new Error(`Unexpected Opportunity Amount text "${text}" for ${opportunityId}.`);
     }
 
-    const bodyText = await page.locator('body').innerText();
-    const fallback = bodyText.match(
-        /Amount[\s\S]{0,50}?([$€£¥₹]?\s*-?\d[\d.,\s]*\d?)/
-    );
-
-    if (fallback) {
-        return fallback[1].trim();
-    }
-
-    throw new Error(`Unable to read the Opportunity Amount from the UI for ${opportunityId}.`);
+    return match[0].trim();
 }
 
 export async function assertOpportunityAmountInUi(

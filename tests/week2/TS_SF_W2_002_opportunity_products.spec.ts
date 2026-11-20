@@ -495,7 +495,10 @@ test('TS_SF_W2_002: Multiple Opportunities with Products and Pricing', async ({ 
         );
 
         // PDF step 9 — validate the currency text format explicitly as well.
-        const uiCurrencySample = `$${targetOpportunity.expectedAmount.toFixed(2)}`;
+        const uiCurrencySample = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(targetOpportunity.expectedAmount);
         expectCurrency(
             'Opportunity Amount currency format',
             uiCurrencySample,
